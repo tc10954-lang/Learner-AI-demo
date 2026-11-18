@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learner AI</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 420px;
+      height: 600px;
+      background-color: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background-color: #2563eb;
+      color: #ffffff;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background-color: #4ade80;
+      border-radius: 50%;
+    }
+
+    .chat-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background-color: #f8fafc;
+    }
+
+    .message {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+
+    .bot-message {
+      background-color: #e2e8f0;
+      color: #1e293b;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+
+    .user-message {
+      background-color: #2563eb;
+      color: #ffffff;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .chat-input-area {
+      display: flex;
+      padding: 12px 16px;
+      background-color: #ffffff;
+      border-top: 1px solid #e2e8f0;
+      gap: 8px;
+    }
+
+    .chat-input-area input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 20px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .chat-input-area input:focus {
+      border-color: #2563eb;
+    }
+
+    .chat-input-area button {
+      background-color: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .chat-input-area button:hover {
+      background-color: #1d4ed8;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="chat-container">
+    <!-- Header -->
+    <div class="chat-header">
+      <div class="status-dot"></div>
+      <h2>Learner AI</h2>
+    </div>
+
+    <!-- Message History -->
+    <div class="chat-messages" id="chatMessages">
+      <div class="message bot-message">Hello! I'm Learner AI. How can I help you today?</div>
+    </div>
+
+    <!-- Input Box -->
+    <div class="chat-input-area">
+      <input type="text" id="userInput" placeholder="Type a message..." autocomplete="off">
+      <button id="sendBtn">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const chatMessages = document.getElementById('chatMessages');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    function appendMessage(text, className) {
+      const msgDiv = document.createElement('div');
+      msgDiv.classList.add('message', className);
+      msgDiv.textContent = text;
+      chatMessages.appendChild(msgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function handleSend() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      // Add user message
+      appendMessage(text, 'user-message');
+      userInput.value = '';
+
+      // Simulate bot response
+      setTimeout(() => {
+        appendMessage("Thanks for your message! This is a placeholder reply.", 'bot-message');
+      }, 600);
+    }
+
+    sendBtn.addEventListener('click', handleSend);
+    userInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleSend();
+    });
+  </script>
+
+</body>
+</html>
