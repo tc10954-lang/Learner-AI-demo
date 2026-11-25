@@ -57,7 +57,6 @@ function selectSubject(subject, optionsDiv) {
   appendMessage(`Brilliant! Let's work on **${subject}**. Share a question or problem, and I'll guide you through the method step-by-step.`, 'bot-message', true);
 }
 
-// Safely calculates a basic arithmetic expression (e.g., "1 + 1" -> 2)
 function evaluateExpression(expr) {
   const cleaned = expr.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').trim();
   if (/^[0-9+\-*/().\s]+$/.test(cleaned) && /[+\-*/]/.test(cleaned)) {
@@ -69,31 +68,47 @@ function evaluateExpression(expr) {
   return null;
 }
 
-// Smart Socratic tutor that checks answers without giving them away first
 function getSmartSocraticReply(userText, subject, history) {
   if (subject === "Maths") {
-    // Check if the user just typed a new arithmetic expression (like "1 + 1")
     const possibleAnswer = evaluateExpression(userText);
     if (possibleAnswer !== null && !userText.includes("=")) {
-      activeMathProblem = { expr: userText.trim(), answer: possibleAnswer };
+      const opSymbol = userText.includes('+') ? '+' : userText.includes('-') ? '-' : userText.includes('*') ? '*' : '/';
+      const opNames = {
+        '+': ['addition', 'add', 'plus', 'sum'],
+        '-': ['subtraction', 'subtract', 'minus', 'take away'],
+        '*': ['multiplication', 'multiply', 'times'],
+        '/': ['division', 'divide', 'divided']
+      };
+      activeMathProblem = { expr: userText.trim(), answer: possibleAnswer, opSymbol, validWords: opNames[opSymbol] };
       const nums = userText.match(/\d+(\.\d+)?/g) || [];
       return `Let's look at the numbers **${nums.join(' and ')}** in your problem:\n1. Identify what the question is asking you to find.\n2. Choose the right operation (**+**, **−**, **×**, or **÷**).\n\nWhich operation connects **${nums[0]}** and **${nums[1]}**, and why?`;
     }
 
-    // If we are actively guiding a Maths problem, check if the student got the right answer!
     if (activeMathProblem !== null) {
+      const lower = userText.toLowerCase();
+      const allOpWords = ['addition', 'add', 'plus', 'subtraction', 'subtract', 'minus', 'multiplication', 'multiply', 'times', 'division', 'divide'];
+      const mentionedWords = allOpWords.filter(w => lower.includes(w));
+
+      if (mentionedWords.length > 0) {
+        const hasWrongWord = mentionedWords.some(w => !activeMathProblem.validWords.includes(w));
+        if (hasWrongWord) {
+          return `Hold on—check that symbol again! The **${activeMathProblem.opSymbol}** sign isn't that operation.\n\nWhat operation does **${activeMathProblem.opSymbol}** actually stand for?`;
+        }
+      }
+
       const userNums = userText.match(/-?\d+(\.\d+)?/g);
       if (userNums) {
         const lastNum = parseFloat(userNums[userNums.length - 1]);
         if (Math.abs(lastNum - activeMathProblem.answer) < 0.0001) {
           const solvedExpr = activeMathProblem.expr;
-          activeMathProblem = null; // Reset for next question
+          activeMathProblem = null;
           return `✅ **Correct! Well done!** You worked out **${solvedExpr}** using the right method.\n\nReady to try another Maths problem?`;
         } else if (!userText.includes(activeMathProblem.expr)) {
-          return `Not quite! Check your calculation again—remember to apply the operation step-by-step to **${activeMathProblem.expr}**.\n\nHave another go! What do you get?`;
+          return `Not quite! Check your calculation again—apply **${activeMathProblem.validWords[0]}** step-by-step to **${activeMathProblem.expr}**.\n\nHave another go! What do you get?`;
         }
       }
-      return `Good thinking! Now take that operation and apply it to **${activeMathProblem.expr}**.\n\nWhat final value do you get?`;
+
+      return `Spot on! That's **${activeMathProblem.validWords[0]}** (**${activeMathProblem.opSymbol}**). Now apply it to **${activeMathProblem.expr}**.\n\nWhat final value do you get?`;
     }
 
     if (userText.includes("=")) {
@@ -103,7 +118,6 @@ function getSmartSocraticReply(userText, subject, history) {
     return "Let's break this **Maths** problem down:\n1. **Identify** what information you are given.\n2. **Choose** the right operation or formula.\n\nWhat is the first step you think we should take?";
   }
 
-  // Non-Maths subjects
   const turn = history.filter(m => m.role === "user").length;
   if (turn > 1) {
     return `✅ **Great effort!** You're on the right track for **${subject}**.\n\nHow would you put that together into a complete, clear explanation?`;
@@ -125,7 +139,7 @@ CORE RULE — NEVER GIVE THE FINAL ANSWER FIRST:
 - Do NOT solve the problem for the student or state the final answer upfront.
 - Teach the learning method step-by-step and ask ONE guiding question at a time.
 - When the student replies with the CORRECT final answer, clearly praise them with "✅ Correct! Well done!" and confirm why their method worked.
-- If they are incorrect, gently point out the mistake without giving the answer and let them retry.
+- If they are incorrect or name the wrong operation, gently point out the mistake without giving the answer and let them retry.
 - Use British English spelling (e.g., Maths, colour, programme, analyse).`;
 
   try {
