@@ -1,10 +1,19 @@
 const chatMessages = document.getElementById('chatMessages');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
+const hintBtn = document.getElementById('hintBtn');
 const resetBtn = document.getElementById('resetBtn');
+
+// Calculator elements
+const calcToggleBtn = document.getElementById('calcToggleBtn');
+const calcModal = document.getElementById('calcModal');
+const closeCalcBtn = document.getElementById('closeCalcBtn');
+const calcDisplay = document.getElementById('calcDisplay');
+const insertCalcBtn = document.getElementById('insertCalcBtn');
 
 let selectedSubject = null;
 let conversationHistory = [];
+let calcExpression = "";
 
 const subjects = [
   "Maths", "English", "Biology", "Chemistry",
@@ -26,7 +35,7 @@ function appendMessage(text, className, isMarkdown = false) {
 }
 
 function showSubjectPrompt() {
-  appendMessage("Hello! I'm Learner AI. Which Subject Do You Need Assistance With?", 'bot-message');
+  appendMessage("Hello! I'm **Learner AI**—I won't just hand you the answer, I'll guide you on *how* to solve it yourself. Which Subject Do You Need Assistance With?", 'bot-message', true);
 
   const optionsDiv = document.createElement('div');
   optionsDiv.classList.add('subject-options');
@@ -49,9 +58,15 @@ function selectSubject(subject, optionsDiv) {
 
   optionsDiv.querySelectorAll('button').forEach(b => b.disabled = true);
   appendMessage(subject, 'user-message');
-  userInput.placeholder = `Ask a ${subject} question...`;
+  userInput.placeholder = `Share a ${subject} problem you're working on...`;
 
-  appendMessage(`Brilliant! Let's work on **${subject}**. What topic or question would you like help with today?`, 'bot-message', true);
+  if (subject === "Maths") {
+    calcToggleBtn.classList.remove('hidden');
+    appendMessage("Brilliant! Let's work on **Maths** together. Share your problem and what you've tried so far—and feel free to use the **🧮 Calc** button to check your arithmetic!", 'bot-message', true);
+  } else {
+    calcToggleBtn.classList.add('hidden');
+    appendMessage(`Brilliant! Let's tackle **${subject}**. Share the question or concept you're working on, and we'll break down the method step-by-step.`, 'bot-message', true);
+  }
 }
 
 async function fetchAIResponse(userText) {
@@ -63,7 +78,15 @@ async function fetchAIResponse(userText) {
 
   conversationHistory.push({ role: "user", content: userText });
 
-  const systemPrompt = `You are Learner AI, a supportive, encouraging tutor for the World Ready programme. The student has selected the subject: ${selectedSubject || 'General Studies'}. Always use British English spelling (e.g., Maths, colour, programme, analyse). Explain concepts clearly step-by-step and keep answers concise.`;
+  // Strict Socratic / Guided-Learning System Prompt
+  const systemPrompt = `You are Learner AI for the World Ready programme, specialising in ${selectedSubject || 'General Studies'}.
+
+CORE RULE — NEVER GIVE THE FINAL ANSWER:
+- Do NOT solve the problem for the student or state the final answer, even if they beg or ask directly.
+- Instead, teach the learning method: break the problem into small steps, explain the underlying rule or strategy, and ask ONE guiding question at a time so the student discovers the answer themselves.
+- If the student gives an attempt, praise what they got right, gently point out where their method went off track, and guide them to fix that specific step.
+- Always use British English spelling (e.g., Maths, colour, programme, analyse, factorise).
+- Keep responses concise, encouraging, and easy to follow.`;
 
   try {
     const response = await fetch("https://pollinations.ai", {
@@ -89,28 +112,86 @@ async function fetchAIResponse(userText) {
   }
 }
 
-function handleSend() {
-  const text = userInput.value.trim();
+function handleSend(customText = null) {
+  const text = customText || userInput.value.trim();
   if (!text) return;
 
   appendMessage(text, 'user-message');
-  userInput.value = '';
+  if (!customText) userInput.value = '';
 
   if (!selectedSubject) {
-    appendMessage("Please choose a subject from the options above first so I can tailor my tutoring!", 'bot-message');
+    appendMessage("Please choose a subject from the options above first so I can guide you properly!", 'bot-message');
     return;
   }
 
   fetchAIResponse(text);
 }
 
+// Hint button sends a nudge without revealing the answer
+hintBtn.addEventListener('click', () => {
+  if (!selectedSubject || conversationHistory.length === 0) {
+    appendMessage("Share a question first, and click **💡 Hint** whenever you get stuck on a step!", 'bot-message', true);
+    return;
+  }
+  handleSend("I'm stuck on this step. Can you give me a small hint on what method to use next without telling me the answer?");
+});
+
+// Calculator Logic
+calcToggleBtn.addEventListener('click', () => {
+  calcModal.style.display = 'flex';
+});
+
+closeCalcBtn.addEventListener('click', () => {
+  calcModal.style.display = 'none';
+});
+
+document.querySelectorAll('.calc-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const val = btn.dataset.val;
+
+    if (val === 'C') {
+      calcExpression = "";
+      calcDisplay.value = "0";
+    } else if (val === 'DEL') {
+      calcExpression = calcExpression.slice(0, -1);
+      calcDisplay.value = calcExpression || "0";
+    } else if (val === '=') {
+      try {
+        if (/^[0-9+\-*/().\s]+$/.test(calcExpression)) {
+          const result = Function(`"use strict"; return (${calcExpression})`)();
+          calcDisplay.value = Number.isFinite(result) ? result : "Error";
+          calcExpression = String(calcDisplay.value);
+        } else {
+          calcDisplay.value = "Error";
+          calcExpression = "";
+        }
+      } catch {
+        calcDisplay.value = "Error";
+        calcExpression = "";
+      }
+    } else {
+      calcExpression += val;
+      calcDisplay.value = calcExpression;
+    }
+  });
+});
+
+insertCalcBtn.addEventListener('click', () => {
+  if (calcDisplay.value && calcDisplay.value !== "Error") {
+    userInput.value += (userInput.value ? " " : "") + calcDisplay.value;
+    calcModal.style.display = 'none';
+    userInput.focus();
+  }
+});
+
 resetBtn.addEventListener('click', () => {
   selectedSubject = null;
+  calcToggleBtn.classList.add('hidden');
   userInput.placeholder = "Select a subject or type a question...";
   showSubjectPrompt();
 });
 
-sendBtn.addEventListener('click', handleSend);
+sendBtn.addEventListener('click', () => handleSend());
 userInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') handleSend();
 });
