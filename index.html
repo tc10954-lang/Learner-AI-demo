@@ -16,14 +16,51 @@
         <h2>Learner AI</h2>
         <span>World Ready</span>
       </div>
-      <button class="header-btn" id="resetBtn" title="Change Subject">Change Subject</button>
+      <div class="header-actions">
+        <button class="header-btn hidden" id="calcToggleBtn" title="Open Maths Calculator">🧮 Calc</button>
+        <button class="header-btn" id="resetBtn" title="Change Subject">Subject</button>
+      </div>
     </div>
 
     <div class="chat-messages" id="chatMessages"></div>
 
     <div class="chat-input-area">
+      <button id="hintBtn" class="hint-btn" type="button" title="Get a step-by-step hint">💡 Hint</button>
       <input type="text" id="userInput" placeholder="Select a subject or type a question..." autocomplete="off">
-      <button id="sendBtn">Send</button>
+      <button id="sendBtn" class="send-btn">Send</button>
+    </div>
+  </div>
+
+  <div class="calc-overlay" id="calcModal">
+    <div class="calc-box">
+      <div class="calc-top">
+        <span>Maths Calculator</span>
+        <button id="closeCalcBtn" class="calc-close">✕</button>
+      </div>
+      <input type="text" id="calcDisplay" class="calc-display" value="0" readonly>
+      <div class="calc-grid">
+        <button class="calc-btn op" data-val="C">C</button>
+        <button class="calc-btn op" data-val="(">(</button>
+        <button class="calc-btn op" data-val=")">)</button>
+        <button class="calc-btn op" data-val="/">÷</button>
+        <button class="calc-btn" data-val="7">7</button>
+        <button class="calc-btn" data-val="8">8</button>
+        <button class="calc-btn" data-val="9">9</button>
+        <button class="calc-btn op" data-val="*">×</button>
+        <button class="calc-btn" data-val="4">4</button>
+        <button class="calc-btn" data-val="5">5</button>
+        <button class="calc-btn" data-val="6">6</button>
+        <button class="calc-btn op" data-val="-">−</button>
+        <button class="calc-btn" data-val="1">1</button>
+        <button class="calc-btn" data-val="2">2</button>
+        <button class="calc-btn" data-val="3">3</button>
+        <button class="calc-btn op" data-val="+">+</button>
+        <button class="calc-btn" data-val="0">0</button>
+        <button class="calc-btn" data-val=".">.</button>
+        <button class="calc-btn op" data-val="DEL">⌫</button>
+        <button class="calc-btn eq" data-val="=">=</button>
+      </div>
+      <button id="insertCalcBtn" class="calc-insert-btn">Insert Result into Chat</button>
     </div>
   </div>
 
