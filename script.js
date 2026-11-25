@@ -4,15 +4,8 @@ const sendBtn = document.getElementById('sendBtn');
 const hintBtn = document.getElementById('hintBtn');
 const resetBtn = document.getElementById('resetBtn');
 
-const calcToggleBtn = document.getElementById('calcToggleBtn');
-const calcModal = document.getElementById('calcModal');
-const closeCalcBtn = document.getElementById('closeCalcBtn');
-const calcDisplay = document.getElementById('calcDisplay');
-const insertCalcBtn = document.getElementById('insertCalcBtn');
-
 let selectedSubject = null;
 let conversationHistory = [];
-let calcExpression = "";
 
 const subjects = [
   "Maths", "English", "Biology", "Chemistry",
@@ -23,19 +16,17 @@ function appendMessage(text, className, isMarkdown = false) {
   const msgDiv = document.createElement('div');
   msgDiv.classList.add('message', className);
   if (isMarkdown) {
-    const formatted = text
+    msgDiv.innerHTML = text
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
       .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
       .replace(/\*(.*?)\*/g, "<em>$1</em>")
       .replace(/\n/g, "<br>");
-    msgDiv.innerHTML = formatted;
   } else {
     msgDiv.textContent = text;
   }
   chatMessages.appendChild(msgDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
 
 function showSubjectPrompt() {
   appendMessage("Hello! I'm **Learner AI**—I won't just hand you the answer, I'll guide you on *how* to figure it out yourself. Which Subject Do You Need Assistance With?", 'bot-message', true);
@@ -58,18 +49,22 @@ function showSubjectPrompt() {
 function selectSubject(subject, optionsDiv) {
   selectedSubject = subject;
   conversationHistory = [];
-
   optionsDiv.querySelectorAll('button').forEach(b => b.disabled = true);
   appendMessage(subject, 'user-message');
-  userInput.placeholder = `Share a ${subject} problem you're working on...`;
+  userInput.placeholder = `Type a ${subject} question...`;
+  appendMessage(`Brilliant! Let's work on **${subject}**. Share a question or problem, and I'll guide you through the method step-by-step.`, 'bot-message', true);
+}
 
+// Built-in backup Socratic tutor in case external AI is blocked by Wi-Fi
+function getBackupSocraticReply(userText, subject) {
+  const lower = userText.toLowerCase();
   if (subject === "Maths") {
-    calcToggleBtn.classList.remove('hidden');
-    appendMessage("Brilliant! Let's work on **Maths** together. Share your problem and what you've tried so far—and use the **🧮 Calc** button at the top whenever you need a calculator!", 'bot-message', true);
-  } else {
-    calcToggleBtn.classList.add('hidden');
-    appendMessage(`Brilliant! Let's tackle **${subject}**. Share the question or concept you're working on, and we'll break down the method step-by-step.`, 'bot-message', true);
+    if (lower.includes("=")) {
+      return "Let's solve this equation using the **balancing method**:\n1. Look at the numbers on the same side as the unknown letter.\n2. Do the **inverse (opposite) operation** to both sides.\n\nWhat is the first step you would take to get the variable on its own?";
+    }
+    return "Let's break this **Maths** problem down using the **RUCSAC** method:\n- **Read** and **Underline** the key numbers.\n- **Choose** the right operation (+, −, ×, ÷).\n\nWhich operation do you think we should start with here, and why?";
   }
+  return `Good question for **${subject}**! Remember, I won't give the straight answer—let's break it down:\n1. Identify the **key term or rule** in your question.\n2. Think about what you already know about this topic.\n\nWhat do you think the first step or main idea is?`;
 }
 
 async function fetchAIResponse(userText) {
@@ -81,60 +76,32 @@ async function fetchAIResponse(userText) {
 
   conversationHistory.push({ role: "user", content: userText });
 
-  const systemPrompt = `You are Learner AI for the World Ready programme, specialising in ${selectedSubject || 'General Studies'}.
+  const systemPrompt = `You are Learner AI for the World Ready programme, tutoring ${selectedSubject || 'General Studies'}.
 CORE RULE — NEVER GIVE THE FINAL ANSWER:
-- Do NOT solve the problem for the student or state the final answer, even if they beg or ask directly.
-- Instead, teach the learning method: break the problem into small steps, explain the underlying rule or strategy, and ask ONE guiding question at a time so the student discovers the answer themselves.
-- Always use British English spelling (e.g., Maths, colour, programme, analyse, factorise).
-- Keep responses concise, encouraging, and easy to follow.`;
+- Do NOT solve the problem for the student or state the final answer, even if they ask directly.
+- Teach the learning method: break the problem into small steps, explain the rule or formula, and ask ONE guiding question at a time.
+- Use British English spelling (e.g., Maths, colour, programme, analyse).`;
 
   try {
-    const response = await fetch("https://pollinations.ai", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messages: [{ role: "system", content: systemPrompt }, ...conversationHistory],
-        model: "openai"
-      })
-    });
+    if (typeof puter === 'undefined') throw new Error("Puter not loaded");
 
-    const aiReply = await response.text();
+    const response = await puter.ai.chat([
+      { role: "system", content: systemPrompt },
+      ...conversationHistory
+    ], { model: "gpt-4o-mini" });
+
+    const aiReply = response?.message?.content || response.toString();
     typingDiv.remove();
     conversationHistory.push({ role: "assistant", content: aiReply });
     appendMessage(aiReply, 'bot-message', true);
   } catch (err) {
-    typingDiv.remove();
-    appendMessage("Network error. Please try again in a moment.", 'bot-message');
-  }
-}
-
-
-  conversationHistory.push({ role: "user", content: userText });
-
-  const systemPrompt = `You are Learner AI for the World Ready programme, specialising in ${selectedSubject || 'General Studies'}.
-CORE RULE — NEVER GIVE THE FINAL ANSWER:
-- Do NOT solve the problem for the student or state the final answer, even if they beg or ask directly.
-- Instead, teach the learning method: break the problem into small steps, explain the underlying rule or strategy, and ask ONE guiding question at a time so the student discovers the answer themselves.
-- Always use British English spelling (e.g., Maths, colour, programme, analyse, factorise).
-- Keep responses concise, encouraging, and easy to follow.`;
-
-  try {
-    const response = await fetch("https://pollinations.ai", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messages: [{ role: "system", content: systemPrompt }, ...conversationHistory],
-        model: "openai"
-      })
-    });
-
-    const aiReply = await response.text();
-    typingDiv.remove();
-    conversationHistory.push({ role: "assistant", content: aiReply });
-    appendMessage(aiReply, 'bot-message', true);
-  } catch (err) {
-    typingDiv.remove();
-    appendMessage("Network error. Please try again in a moment.", 'bot-message');
+    // Seamless fallback so it NEVER shows "Network Error"
+    setTimeout(() => {
+      typingDiv.remove();
+      const backupReply = getBackupSocraticReply(userText, selectedSubject);
+      conversationHistory.push({ role: "assistant", content: backupReply });
+      appendMessage(backupReply, 'bot-message', true);
+    }, 600);
   }
 }
 
@@ -146,7 +113,7 @@ function handleSend(customText = null) {
   if (!customText) userInput.value = '';
 
   if (!selectedSubject) {
-    appendMessage("Please choose a subject from the options above first so I can guide you properly!", 'bot-message');
+    appendMessage("Please click one of the subjects above first!", 'bot-message');
     return;
   }
   fetchAIResponse(text);
@@ -154,57 +121,15 @@ function handleSend(customText = null) {
 
 hintBtn.addEventListener('click', () => {
   if (!selectedSubject || conversationHistory.length === 0) {
-    appendMessage("Share a question first, and click **💡 Hint** whenever you get stuck on a step!", 'bot-message', true);
+    appendMessage("Type a question first, then click **💡 Hint** if you get stuck!", 'bot-message', true);
     return;
   }
-  handleSend("I'm stuck on this step. Can you give me a small hint on what method to use next without telling me the answer?");
-});
-
-calcToggleBtn.addEventListener('click', () => calcModal.style.display = 'flex');
-closeCalcBtn.addEventListener('click', () => calcModal.style.display = 'none');
-
-document.querySelectorAll('.calc-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const val = btn.dataset.val;
-    if (val === 'C') {
-      calcExpression = "";
-      calcDisplay.value = "0";
-    } else if (val === 'DEL') {
-      calcExpression = calcExpression.slice(0, -1);
-      calcDisplay.value = calcExpression || "0";
-    } else if (val === '=') {
-      try {
-        if (/^[0-9+\-*/().\s]+$/.test(calcExpression)) {
-          const result = Function(`"use strict"; return (${calcExpression})`)();
-          calcDisplay.value = Number.isFinite(result) ? result : "Error";
-          calcExpression = String(calcDisplay.value);
-        } else {
-          calcDisplay.value = "Error";
-          calcExpression = "";
-        }
-      } catch {
-        calcDisplay.value = "Error";
-        calcExpression = "";
-      }
-    } else {
-      calcExpression += val;
-      calcDisplay.value = calcExpression;
-    }
-  });
-});
-
-insertCalcBtn.addEventListener('click', () => {
-  if (calcDisplay.value && calcDisplay.value !== "Error") {
-    userInput.value += (userInput.value ? " " : "") + calcDisplay.value;
-    calcModal.style.display = 'none';
-    userInput.focus();
-  }
+  handleSend("I'm stuck. Give me a small hint on the method without telling me the answer.");
 });
 
 resetBtn.addEventListener('click', () => {
   selectedSubject = null;
-  calcToggleBtn.classList.add('hidden');
-  userInput.placeholder = "Select a subject or type a question...";
+  userInput.placeholder = "Select a subject first...";
   showSubjectPrompt();
 });
 
