@@ -6,7 +6,7 @@ const resetBtn = document.getElementById('resetBtn');
 
 let selectedSubject = null;
 let conversationHistory = [];
-let liveAIReady = false;
+let activeMathProblem = null;
 
 const subjects = [
   "Maths", "English", "Biology", "Chemistry",
@@ -50,35 +50,65 @@ function showSubjectPrompt() {
 function selectSubject(subject, optionsDiv) {
   selectedSubject = subject;
   conversationHistory = [];
+  activeMathProblem = null;
   optionsDiv.querySelectorAll('button').forEach(b => b.disabled = true);
   appendMessage(subject, 'user-message');
   userInput.placeholder = `Type a ${subject} question...`;
   appendMessage(`Brilliant! Let's work on **${subject}**. Share a question or problem, and I'll guide you through the method step-by-step.`, 'bot-message', true);
 }
 
-// Smart multi-turn Socratic guide when offline/guest
-function getSmartSocraticReply(userText, subject, history) {
-  const turn = history.filter(m => m.role === "user").length;
-  const nums = userText.match(/\d+(\.\d+)?/g);
-
-  if (turn > 1) {
-    if (subject === "Maths") {
-      return `Good thinking! Now take that step and apply it to the numbers in your problem${nums ? ` (**${nums.join(', ')}**)` : ''}.\n\nWrite down what you get for that step—I'll check your method before we move to the final step!`;
-    }
-    return `Nice start! Now expand on that idea using a specific example or piece of evidence from your **${subject}** notes.\n\nHow would you put that into one clear sentence?`;
+// Safely calculates a basic arithmetic expression (e.g., "1 + 1" -> 2)
+function evaluateExpression(expr) {
+  const cleaned = expr.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').trim();
+  if (/^[0-9+\-*/().\s]+$/.test(cleaned) && /[+\-*/]/.test(cleaned)) {
+    try {
+      const val = Function(`"use strict"; return (${cleaned})`)();
+      return Number.isFinite(val) ? val : null;
+    } catch { return null; }
   }
+  return null;
+}
 
+// Smart Socratic tutor that checks answers without giving them away first
+function getSmartSocraticReply(userText, subject, history) {
   if (subject === "Maths") {
+    // Check if the user just typed a new arithmetic expression (like "1 + 1")
+    const possibleAnswer = evaluateExpression(userText);
+    if (possibleAnswer !== null && !userText.includes("=")) {
+      activeMathProblem = { expr: userText.trim(), answer: possibleAnswer };
+      const nums = userText.match(/\d+(\.\d+)?/g) || [];
+      return `Let's look at the numbers **${nums.join(' and ')}** in your problem:\n1. Identify what the question is asking you to find.\n2. Choose the right operation (**+**, **−**, **×**, or **÷**).\n\nWhich operation connects **${nums[0]}** and **${nums[1]}**, and why?`;
+    }
+
+    // If we are actively guiding a Maths problem, check if the student got the right answer!
+    if (activeMathProblem !== null) {
+      const userNums = userText.match(/-?\d+(\.\d+)?/g);
+      if (userNums) {
+        const lastNum = parseFloat(userNums[userNums.length - 1]);
+        if (Math.abs(lastNum - activeMathProblem.answer) < 0.0001) {
+          const solvedExpr = activeMathProblem.expr;
+          activeMathProblem = null; // Reset for next question
+          return `✅ **Correct! Well done!** You worked out **${solvedExpr}** using the right method.\n\nReady to try another Maths problem?`;
+        } else if (!userText.includes(activeMathProblem.expr)) {
+          return `Not quite! Check your calculation again—remember to apply the operation step-by-step to **${activeMathProblem.expr}**.\n\nHave another go! What do you get?`;
+        }
+      }
+      return `Good thinking! Now take that operation and apply it to **${activeMathProblem.expr}**.\n\nWhat final value do you get?`;
+    }
+
     if (userText.includes("=")) {
       return `Let's solve **${userText}** using the **balancing method**:\n1. Look at what is happening to the unknown letter.\n2. Use the **inverse (opposite) operation** on both sides.\n\nWhat is the very first operation you should undo?`;
     }
-    if (nums && nums.length >= 2) {
-      return `Let's look at the numbers **${nums.join(' and ')}** in your problem:\n1. Identify what the question is asking you to find.\n2. Choose the right operation (**+**, **−**, **×**, or **÷**).\n\nWhich operation connects **${nums}** and **${nums}**, and why?`;
-    }
-    return "Let's break this **Maths** problem down:\n1. **Identify** what information you are given.\n2. **Recall** the formula or rule that links those values.\n\nWhat formula or rule do you think applies here?";
+
+    return "Let's break this **Maths** problem down:\n1. **Identify** what information you are given.\n2. **Choose** the right operation or formula.\n\nWhat is the first step you think we should take?";
   }
 
-  return `Great **${subject}** question! Instead of giving the answer straight away, let's use a 3-step method:\n1. **Define** the key term in "${userText}".\n2. **Explain** how or why it happens.\n3. **Connect** it back to the question.\n\nIn your own words, what is the main concept here?`;
+  // Non-Maths subjects
+  const turn = history.filter(m => m.role === "user").length;
+  if (turn > 1) {
+    return `✅ **Great effort!** You're on the right track for **${subject}**.\n\nHow would you put that together into a complete, clear explanation?`;
+  }
+  return `Great **${subject}** question! Instead of giving the answer straight away, let's break it down:\n1. **Identify** the key term or concept.\n2. **Explain** how or why it works.\n\nIn your own words, what is the main idea here?`;
 }
 
 async function fetchAIResponse(userText) {
@@ -91,15 +121,15 @@ async function fetchAIResponse(userText) {
   conversationHistory.push({ role: "user", content: userText });
 
   const systemPrompt = `You are Learner AI for the World Ready programme, tutoring ${selectedSubject || 'General Studies'}.
-CORE RULE — NEVER GIVE THE FINAL ANSWER:
-- Do NOT solve the problem for the student or state the final answer, even if they ask directly.
-- Teach the learning method: break the problem into small steps, explain the rule or formula, and ask ONE guiding question at a time.
+CORE RULE — NEVER GIVE THE FINAL ANSWER FIRST:
+- Do NOT solve the problem for the student or state the final answer upfront.
+- Teach the learning method step-by-step and ask ONE guiding question at a time.
+- When the student replies with the CORRECT final answer, clearly praise them with "✅ Correct! Well done!" and confirm why their method worked.
+- If they are incorrect, gently point out the mistake without giving the answer and let them retry.
 - Use British English spelling (e.g., Maths, colour, programme, analyse).`;
 
   try {
     if (typeof puter === 'undefined') throw new Error("No Puter");
-
-    // Trigger guest session cleanly on user interaction if not yet signed in
     if (!puter.auth.isSignedIn()) {
       await puter.auth.signIn({ attempt_temp_user_creation: true });
     }
@@ -142,11 +172,16 @@ hintBtn.addEventListener('click', () => {
     appendMessage("Type a question first, then click **💡 Hint** if you get stuck!", 'bot-message', true);
     return;
   }
+  if (activeMathProblem) {
+    appendMessage(`💡 **Hint:** Look at the symbol in **${activeMathProblem.expr}** and combine the two numbers step-by-step. Give it a try!`, 'bot-message', true);
+    return;
+  }
   handleSend("I'm stuck. Give me a small hint on the method without telling me the answer.");
 });
 
 resetBtn.addEventListener('click', () => {
   selectedSubject = null;
+  activeMathProblem = null;
   userInput.placeholder = "Select a subject first...";
   showSubjectPrompt();
 });
