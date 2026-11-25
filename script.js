@@ -8,26 +8,25 @@ let selectedSubject = null;
 let currentQuestion = null;
 let currentStepIndex = 0;
 
-// Programmed Socratic Question Bank (Method first, never straight answers!)
 const showcaseBank = {
   "Maths": [
     {
       question: "Solve: 3x + 5 = 20",
       steps: [
         {
-          prompt: "Let's use the **balancing method**—we never jump straight to the answer!\n1. Look at `3x + 5 = 20`.\n2. To get `3x` on its own, we must undo the `+ 5` first.\n\n**Step 1:** Which inverse operation should we apply to both sides?",
+          prompt: "Let's use the **balancing method**—we never jump straight to the answer!\n1. Look at `3x + 5 = 20`.\n2. To get `3x` on its own, undo `+ 5` first.\n\n**Step 1:** Which inverse operation should we apply to both sides?",
           options: [
             { text: "Subtract 5 from both sides", correct: true },
-            { text: "Add 5 to both sides", correct: false, feedback: "Careful! Adding 5 would give `3x + 10 = 25`. We need the **opposite** of `+ 5`." },
-            { text: "Divide 20 by 3 first", correct: false, feedback: "Hold on! Always undo addition/subtraction **before** dividing by the coefficient." }
+            { text: "Add 5 to both sides", correct: false, feedback: "Careful! Adding 5 gives `3x + 10 = 25`. We need the **opposite** of `+ 5`." },
+            { text: "Divide 20 by 3 first", correct: false, feedback: "Hold on! Undo addition/subtraction **before** dividing." }
           ],
-          hint: "💡 **Hint:** The opposite (inverse) of `+ 5` is **subtracting 5**!"
+          hint: "💡 **Hint:** The opposite of `+ 5` is **subtracting 5**!"
         },
         {
-          prompt: "✅ Spot on! Subtracting 5 from both sides leaves us with **`3x = 15`**.\n\n**Step 2:** Now `x` is multiplied by 3. Apply the inverse operation—what is the value of **x**?",
+          prompt: "✅ Spot on! Subtracting 5 leaves **`3x = 15`**.\n\n**Step 2:** Now `x` is multiplied by 3. Apply the inverse operation—what is **x**?",
           options: [
             { text: "x = 5", correct: true },
-            { text: "x = 12", correct: false, feedback: "Not quite—don't subtract 3! Since `3x` means `3 × x`, divide 15 by 3." },
+            { text: "x = 12", correct: false, feedback: "Don't subtract 3! Since `3x` means `3 × x`, divide 15 by 3." },
             { text: "x = 45", correct: false, feedback: "Careful! You multiplied by 3 instead of dividing by 3." }
           ],
           validTyped: ["5", "x = 5", "x=5"],
@@ -36,16 +35,16 @@ const showcaseBank = {
       ]
     },
     {
-      question: "Find the area of a triangle (base = 8 cm, height = 5 cm)",
+      question: "Area of a triangle (base = 8 cm, height = 5 cm)",
       steps: [
         {
-          prompt: "Let's apply the **Geometry formula method**:\nA triangle is half of a rectangle with the same base and height.\n\n**Step 1:** Which formula should we use before plugging in numbers?",
+          prompt: "Let's apply the **Geometry formula method**:\nA triangle is half of a rectangle with the same base and height.\n\n**Step 1:** Which formula should we use?",
           options: [
             { text: "½ × base × height", correct: true },
-            { text: "base × height", correct: false, feedback: "Close! `base × height` gives the area of a **rectangle**. Remember a triangle is half of that!" },
+            { text: "base × height", correct: false, feedback: "Close! `base × height` is a **rectangle**. A triangle is half of that!" },
             { text: "base + height", correct: false, feedback: "Not quite—adding gives part of a perimeter, not area." }
           ],
-          hint: "💡 **Hint:** Multiply the base by the height, then **halve** it (`½ × b × h`)."
+          hint: "💡 **Hint:** Multiply base by height, then **halve** it (`½ × b × h`)."
         },
         {
           prompt: "✅ Exact right formula! Now substitute `base = 8` and `height = 5` into **`½ × 8 × 5`**.\n\n**Step 2:** What is the final area?",
@@ -65,10 +64,10 @@ const showcaseBank = {
       question: "What is a metaphor?",
       steps: [
         {
-          prompt: "Let's analyse this **English** language technique using comparison rules:\n1. Both similes and metaphors compare two things.\n2. The difference is **how** the comparison is phrased.\n\n**Step 1:** How does a metaphor compare two things?",
+          prompt: "Let's analyse this **English** language technique:\n1. Both similes and metaphors compare two things.\n2. The difference is **how** the comparison is phrased.\n\n**Step 1:** How does a metaphor compare two things?",
           options: [
             { text: "Directly, without 'like' or 'as'", correct: true },
-            { text: "Using the words 'like' or 'as'", correct: false, feedback: "Aha, common trap! Comparing things using *'like'* or *'as'* is a **simile**, not a metaphor!" },
+            { text: "Using the words 'like' or 'as'", correct: false, feedback: "Common trap! Comparing things using *'like'* or *'as'* is a **simile**, not a metaphor!" },
             { text: "Giving human feelings to weather", correct: false, feedback: "Good guess, but giving human traits to weather is **pathetic fallacy**." }
           ],
           hint: "💡 **Hint:** A simile uses *'like'* or *'as'*—a **metaphor** makes a **direct** comparison without them!"
@@ -78,34 +77,10 @@ const showcaseBank = {
           options: [
             { text: "The classroom was a zoo.", correct: true },
             { text: "He ran as fast as a cheetah.", correct: false, feedback: "Watch out! That sentence uses *'as'*, which makes it a **simile**." },
-            { text: "The wind whispered through the trees.", correct: false, feedback: "That gives a human action ('whispered') to the wind—that's **personification**." }
+            { text: "The wind whispered through the trees.", correct: false, feedback: "Giving a human action ('whispered') to the wind is **personification**." }
           ],
-          validTyped: ["zoo", "the classroom was a zoo", "classroom was a zoo"],
+          validTyped: ["zoo", "the classroom was a zoo"],
           hint: "💡 **Hint:** Pick the sentence that says one thing **was** another without using *'like'* or *'as'*."
-        }
-      ]
-    },
-    {
-      question: "How do I structure a P.E.E. analytical paragraph?",
-      steps: [
-        {
-          prompt: "Let's build a strong **English Literature** paragraph step-by-step:\n1. First, make a clear **Point** answering the question.\n2. Next, back up your point.\n\n**Step 1:** What does the first **E** in **P.E.E.** stand for?",
-          options: [
-            { text: "Evidence (a short quote)", correct: true },
-            { text: "Ending (a conclusion)", correct: false, feedback: "Not yet! Before concluding, you need to prove your point with text from the book." },
-            { text: "Exaggeration", correct: false, feedback: "Not quite—in essays we back up points with textual proof!" }
-          ],
-          hint: "💡 **Hint:** How do you prove your Point using the text? With **Evidence**!"
-        },
-        {
-          prompt: "✅ Spot on! Point → Evidence.\n\n**Step 2:** What is the final **E** step that earns top marks?",
-          options: [
-            { text: "Explain the effect on the reader", correct: true },
-            { text: "Erase the quote", correct: false, feedback: "Definitely keep your quote! Now tell the examiner what that quote means." },
-            { text: "Enter a new topic", correct: false, feedback: "Stay focused on your current quote first before starting a new paragraph!" }
-          ],
-          validTyped: ["explain", "explanation", "explain the effect"],
-          hint: "💡 **Hint:** After giving a quote, you must **E**xplain what it reveals to the reader."
         }
       ]
     }
@@ -115,23 +90,23 @@ const showcaseBank = {
       question: "What is the function of mitochondria?",
       steps: [
         {
-          prompt: "Let's use the **Cell Structure & Function** method:\n1. Mitochondria are found inside both animal and plant cells.\n2. Inside them, glucose reacts with oxygen.\n\n**Step 1:** What biological process takes place inside the mitochondria?",
+          prompt: "Let's use the **Cell Structure & Function** method:\n1. Mitochondria are found inside animal and plant cells.\n2. Inside them, glucose reacts with oxygen.\n\n**Step 1:** What biological process takes place inside mitochondria?",
           options: [
             { text: "Aerobic respiration", correct: true },
-            { text: "Photosynthesis", correct: false, feedback: "Common mix-up! **Photosynthesis** happens in **chloroplasts** (in plants), not mitochondria." },
-            { text: "Digestion of food", correct: false, feedback: "Digestion happens in the digestive system—cells break down glucose via respiration." }
+            { text: "Photosynthesis", correct: false, feedback: "Common mix-up! **Photosynthesis** happens in **chloroplasts**, not mitochondria." },
+            { text: "Digestion of food", correct: false, feedback: "Cells break down glucose via **respiration**, not digestion." }
           ],
-          hint: "💡 **Hint:** Cells use oxygen and glucose to release energy in a process called **aerobic respiration**."
+          hint: "💡 **Hint:** Cells use oxygen and glucose in a process called **aerobic respiration**."
         },
         {
           prompt: "✅ Exactly right! Aerobic respiration happens there.\n\n**Step 2:** What does this process release for the cell to use?",
           options: [
             { text: "Energy", correct: true },
-            { text: "Chlorophyll", correct: false, feedback: "Chlorophyll is the green pigment in leaves. Think about why mitochondria are called the 'powerhouse'!" },
-            { text: "Carbon dioxide only", correct: false, feedback: "Carbon dioxide is a waste product—what useful thing powers cell activities?" }
+            { text: "Chlorophyll", correct: false, feedback: "Chlorophyll is the green pigment in leaves. Think why mitochondria are the 'powerhouse'!" },
+            { text: "Carbon dioxide only", correct: false, feedback: "Carbon dioxide is waste—what useful thing powers cell activities?" }
           ],
           validTyped: ["energy", "atp"],
-          hint: "💡 **Hint:** Mitochondria are known as the powerhouse of the cell because they release **energy**!"
+          hint: "💡 **Hint:** Mitochondria release **energy** for the cell!"
         }
       ]
     }
@@ -153,8 +128,8 @@ const showcaseBank = {
           prompt: "✅ Spot on! Hydrogen (H) and Oxygen (O).\n\n**Step 2:** Each molecule has **2 Hydrogen** atoms and **1 Oxygen** atom. How do we write its formula?",
           options: [
             { text: "H₂O", correct: true },
-            { text: "HO₂", correct: false, feedback: "Check the numbers! The '2' goes right after the element that has two atoms (**H**)." },
-            { text: "2HO", correct: false, feedback: "A big '2' in front means two separate molecules—use a subscript after H instead." }
+            { text: "HO₂", correct: false, feedback: "Check the numbers! The '2' goes right after **H**." },
+            { text: "2HO", correct: false, feedback: "A big '2' in front means two molecules—use a subscript after H instead." }
           ],
           validTyped: ["h2o", "h₂o"],
           hint: "💡 **Hint:** Put the `2` right after **H** and before **O**."
@@ -163,17 +138,16 @@ const showcaseBank = {
     }
   ]
 };
-
 Object.assign(showcaseBank, {
   "Physics": [
     {
       question: "Calculate speed: Distance = 100 m, Time = 20 s",
       steps: [
         {
-          prompt: "Let's use the **Physics Formula Method**:\n1. Look at the units: distance is in **metres (m)** and time is in **seconds (s)**.\n2. Speed is measured in **metres per second (m/s)**.\n\n**Step 1:** Which formula connects speed, distance, and time?",
+          prompt: "Let's use the **Physics Formula Method**:\n1. Distance is in **metres (m)** and time is in **seconds (s)**.\n2. Speed is measured in **metres per second (m/s)**.\n\n**Step 1:** Which formula connects speed, distance, and time?",
           options: [
             { text: "Speed = Distance ÷ Time", correct: true },
-            { text: "Speed = Distance × Time", correct: false, feedback: "Careful! Multiplying distance by time gives `m·s`, not `m/s`. Look at the `/` in `m/s`!" },
+            { text: "Speed = Distance × Time", correct: false, feedback: "Careful! Multiplying gives `m·s`, not `m/s`. Look at the `/` in `m/s`!" },
             { text: "Speed = Time ÷ Distance", correct: false, feedback: "Flipped! Distance goes on top (`Distance ÷ Time`)." }
           ],
           hint: "💡 **Hint:** 'Per' in *metres **per** second* means **divided by** (`Distance ÷ Time`)."
@@ -199,7 +173,7 @@ Object.assign(showcaseBank, {
           prompt: "Let's trace the **Tectonic Process** step-by-step:\n1. The Earth's crust is split into huge slabs of rock.\n\n**Step 1:** What are these giant slabs of the Earth's crust called?",
           options: [
             { text: "Tectonic plates", correct: true },
-            { text: "Convection currents", correct: false, feedback: "Close! Convection currents in the mantle **move** the slabs, while the slabs themselves are **tectonic plates**." },
+            { text: "Convection currents", correct: false, feedback: "Close! Convection currents **move** the slabs, while the slabs themselves are **tectonic plates**." },
             { text: "Sedimentary layers", correct: false, feedback: "Sedimentary layers are rock types—the giant moving crust sections are **tectonic plates**." }
           ],
           hint: "💡 **Hint:** They are called **tectonic plates**!"
@@ -208,7 +182,7 @@ Object.assign(showcaseBank, {
           prompt: "✅ Spot on! Tectonic plates move slowly and get stuck at boundaries.\n\n**Step 2:** What happens next to trigger the earthquake?",
           options: [
             { text: "Friction builds pressure until the plates suddenly slip", correct: true },
-            { text: "Ocean waves push the plates down", correct: false, feedback: "Actually, underwater earthquakes cause tsunamis—not the other way around!" },
+            { text: "Ocean waves push the plates down", correct: false, feedback: "Underwater earthquakes cause tsunamis—not the other way around!" },
             { text: "Heavy rain softens the crust", correct: false, feedback: "Rain causes surface erosion, whereas earthquakes come from deep **tectonic pressure**." }
           ],
           validTyped: ["pressure", "slip", "friction", "plates slip"],
@@ -255,14 +229,14 @@ Object.assign(showcaseBank, {
             { text: "As a permanent value that can never change", correct: false, feedback: "Careful! A value that **never** changes is a **constant**, not a variable!" },
             { text: "Inside the monitor screen pixels", correct: false, feedback: "The monitor only displays output—variables live inside the computer's **memory (RAM)**." }
           ],
-          hint: "💡 **Hint:** Think of a named **box in memory** that holds a value that can **vary** (change)!"
+          hint: "💡 **Hint:** Picture a named **box in memory** that holds a value that can **vary** (change)!"
         },
         {
           prompt: "✅ Brilliant! A variable is a named memory container whose value can change.\n\n**Step 2:** Which line of Python code correctly creates a variable named `score` set to `10`?",
           options: [
             { text: "score = 10", correct: true },
-            { text: "10 = score", correct: false, feedback: "Flipped! In programming, the **variable name** always goes on the **left** of the `=` sign." },
-            { text: "score == 10", correct: false, feedback: "Watch out! Double equals (`==`) **compares** two values—single equals (`=`) **assigns** a value." }
+            { text: "10 = score", correct: false, feedback: "Flipped! In programming, the **variable name** always goes on the **left** of `=`." },
+            { text: "score == 10", correct: false, feedback: "Double equals (`==`) **compares** two values—single equals (`=`) **assigns** a value." }
           ],
           validTyped: ["score = 10", "score=10"],
           hint: "💡 **Hint:** Put the variable name on the left and use a single `=` sign: `score = 10`."
@@ -312,10 +286,8 @@ function selectSubject(subject, optionsDiv) {
   selectedSubject = subject;
   currentQuestion = null;
   currentStepIndex = 0;
-
   optionsDiv.querySelectorAll('button').forEach(b => b.disabled = true);
   appendMessage(subject, 'user-message');
-
   showQuestionOptions(subject);
 }
 
@@ -374,7 +346,6 @@ function handleOptionChoice(opt, optDiv) {
     optDiv.querySelectorAll('button').forEach(b => b.disabled = true);
     advanceStep();
   } else {
-    // Disable only the wrong button clicked so the visitor can try again!
     optDiv.querySelectorAll('button').forEach(b => {
       if (b.textContent === opt.text) b.disabled = true;
     });
@@ -412,12 +383,10 @@ function handleTypedSend() {
   const step = currentQuestion.steps[currentStepIndex];
   const lower = text.toLowerCase();
 
-  // Check if typed text matches an option or validTyped answer
   const matchedOpt = (step.options || []).find(o => o.text.toLowerCase() === lower);
   const matchedTyped = (step.validTyped || []).some(v => lower === v.toLowerCase() || lower.includes(v.toLowerCase()));
 
   if ((matchedOpt && matchedOpt.correct) || matchedTyped) {
-    // Disable any active option buttons
     const allOptGroups = chatMessages.querySelectorAll('.subject-options');
     if (allOptGroups.length) {
       allOptGroups[allOptGroups.length - 1].querySelectorAll('button').forEach(b => b.disabled = true);
