@@ -108,6 +108,36 @@ CORE RULE — NEVER GIVE THE FINAL ANSWER:
   }
 }
 
+
+  conversationHistory.push({ role: "user", content: userText });
+
+  const systemPrompt = `You are Learner AI for the World Ready programme, specialising in ${selectedSubject || 'General Studies'}.
+CORE RULE — NEVER GIVE THE FINAL ANSWER:
+- Do NOT solve the problem for the student or state the final answer, even if they beg or ask directly.
+- Instead, teach the learning method: break the problem into small steps, explain the underlying rule or strategy, and ask ONE guiding question at a time so the student discovers the answer themselves.
+- Always use British English spelling (e.g., Maths, colour, programme, analyse, factorise).
+- Keep responses concise, encouraging, and easy to follow.`;
+
+  try {
+    const response = await fetch("https://pollinations.ai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [{ role: "system", content: systemPrompt }, ...conversationHistory],
+        model: "openai"
+      })
+    });
+
+    const aiReply = await response.text();
+    typingDiv.remove();
+    conversationHistory.push({ role: "assistant", content: aiReply });
+    appendMessage(aiReply, 'bot-message', true);
+  } catch (err) {
+    typingDiv.remove();
+    appendMessage("Network error. Please try again in a moment.", 'bot-message');
+  }
+}
+
 function handleSend(customText = null) {
   const text = customText || userInput.value.trim();
   if (!text) return;
