@@ -22,14 +22,20 @@ const subjects = [
 function appendMessage(text, className, isMarkdown = false) {
   const msgDiv = document.createElement('div');
   msgDiv.classList.add('message', className);
-  if (isMarkdown && typeof marked !== 'undefined') {
-    msgDiv.innerHTML = marked.parse(text);
+  if (isMarkdown) {
+    const formatted = text
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.*?)\*/g, "<em>$1</em>")
+      .replace(/\n/g, "<br>");
+    msgDiv.innerHTML = formatted;
   } else {
     msgDiv.textContent = text;
   }
   chatMessages.appendChild(msgDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
 
 function showSubjectPrompt() {
   appendMessage("Hello! I'm **Learner AI**—I won't just hand you the answer, I'll guide you on *how* to figure it out yourself. Which Subject Do You Need Assistance With?", 'bot-message', true);
