@@ -6,6 +6,7 @@ const resetBtn = document.getElementById('resetBtn');
 
 let selectedSubject = null;
 let conversationHistory = [];
+let liveAIReady = false;
 
 const subjects = [
   "Maths", "English", "Biology", "Chemistry",
@@ -55,16 +56,29 @@ function selectSubject(subject, optionsDiv) {
   appendMessage(`Brilliant! Let's work on **${subject}**. Share a question or problem, and I'll guide you through the method step-by-step.`, 'bot-message', true);
 }
 
-// Built-in backup Socratic tutor in case external AI is blocked by Wi-Fi
-function getBackupSocraticReply(userText, subject) {
-  const lower = userText.toLowerCase();
-  if (subject === "Maths") {
-    if (lower.includes("=")) {
-      return "Let's solve this equation using the **balancing method**:\n1. Look at the numbers on the same side as the unknown letter.\n2. Do the **inverse (opposite) operation** to both sides.\n\nWhat is the first step you would take to get the variable on its own?";
+// Smart multi-turn Socratic guide when offline/guest
+function getSmartSocraticReply(userText, subject, history) {
+  const turn = history.filter(m => m.role === "user").length;
+  const nums = userText.match(/\d+(\.\d+)?/g);
+
+  if (turn > 1) {
+    if (subject === "Maths") {
+      return `Good thinking! Now take that step and apply it to the numbers in your problem${nums ? ` (**${nums.join(', ')}**)` : ''}.\n\nWrite down what you get for that step—I'll check your method before we move to the final step!`;
     }
-    return "Let's break this **Maths** problem down using the **RUCSAC** method:\n- **Read** and **Underline** the key numbers.\n- **Choose** the right operation (+, −, ×, ÷).\n\nWhich operation do you think we should start with here, and why?";
+    return `Nice start! Now expand on that idea using a specific example or piece of evidence from your **${subject}** notes.\n\nHow would you put that into one clear sentence?`;
   }
-  return `Good question for **${subject}**! Remember, I won't give the straight answer—let's break it down:\n1. Identify the **key term or rule** in your question.\n2. Think about what you already know about this topic.\n\nWhat do you think the first step or main idea is?`;
+
+  if (subject === "Maths") {
+    if (userText.includes("=")) {
+      return `Let's solve **${userText}** using the **balancing method**:\n1. Look at what is happening to the unknown letter.\n2. Use the **inverse (opposite) operation** on both sides.\n\nWhat is the very first operation you should undo?`;
+    }
+    if (nums && nums.length >= 2) {
+      return `Let's look at the numbers **${nums.join(' and ')}** in your problem:\n1. Identify what the question is asking you to find.\n2. Choose the right operation (**+**, **−**, **×**, or **÷**).\n\nWhich operation connects **${nums}** and **${nums}**, and why?`;
+    }
+    return "Let's break this **Maths** problem down:\n1. **Identify** what information you are given.\n2. **Recall** the formula or rule that links those values.\n\nWhat formula or rule do you think applies here?";
+  }
+
+  return `Great **${subject}** question! Instead of giving the answer straight away, let's use a 3-step method:\n1. **Define** the key term in "${userText}".\n2. **Explain** how or why it happens.\n3. **Connect** it back to the question.\n\nIn your own words, what is the main concept here?`;
 }
 
 async function fetchAIResponse(userText) {
@@ -83,7 +97,12 @@ CORE RULE — NEVER GIVE THE FINAL ANSWER:
 - Use British English spelling (e.g., Maths, colour, programme, analyse).`;
 
   try {
-    if (typeof puter === 'undefined') throw new Error("Puter not loaded");
+    if (typeof puter === 'undefined') throw new Error("No Puter");
+
+    // Trigger guest session cleanly on user interaction if not yet signed in
+    if (!puter.auth.isSignedIn()) {
+      await puter.auth.signIn({ attempt_temp_user_creation: true });
+    }
 
     const response = await puter.ai.chat([
       { role: "system", content: systemPrompt },
@@ -95,13 +114,12 @@ CORE RULE — NEVER GIVE THE FINAL ANSWER:
     conversationHistory.push({ role: "assistant", content: aiReply });
     appendMessage(aiReply, 'bot-message', true);
   } catch (err) {
-    // Seamless fallback so it NEVER shows "Network Error"
     setTimeout(() => {
       typingDiv.remove();
-      const backupReply = getBackupSocraticReply(userText, selectedSubject);
-      conversationHistory.push({ role: "assistant", content: backupReply });
-      appendMessage(backupReply, 'bot-message', true);
-    }, 600);
+      const reply = getSmartSocraticReply(userText, selectedSubject, conversationHistory);
+      conversationHistory.push({ role: "assistant", content: reply });
+      appendMessage(reply, 'bot-message', true);
+    }, 500);
   }
 }
 
