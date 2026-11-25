@@ -4,7 +4,6 @@ const sendBtn = document.getElementById('sendBtn');
 const hintBtn = document.getElementById('hintBtn');
 const resetBtn = document.getElementById('resetBtn');
 
-// Calculator elements
 const calcToggleBtn = document.getElementById('calcToggleBtn');
 const calcModal = document.getElementById('calcModal');
 const closeCalcBtn = document.getElementById('closeCalcBtn');
@@ -23,19 +22,17 @@ const subjects = [
 function appendMessage(text, className, isMarkdown = false) {
   const msgDiv = document.createElement('div');
   msgDiv.classList.add('message', className);
-
   if (isMarkdown && typeof marked !== 'undefined') {
     msgDiv.innerHTML = marked.parse(text);
   } else {
     msgDiv.textContent = text;
   }
-
   chatMessages.appendChild(msgDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 function showSubjectPrompt() {
-  appendMessage("Hello! I'm **Learner AI**—I won't just hand you the answer, I'll guide you on *how* to solve it yourself. Which Subject Do You Need Assistance With?", 'bot-message', true);
+  appendMessage("Hello! I'm **Learner AI**—I won't just hand you the answer, I'll guide you on *how* to figure it out yourself. Which Subject Do You Need Assistance With?", 'bot-message', true);
 
   const optionsDiv = document.createElement('div');
   optionsDiv.classList.add('subject-options');
@@ -62,7 +59,7 @@ function selectSubject(subject, optionsDiv) {
 
   if (subject === "Maths") {
     calcToggleBtn.classList.remove('hidden');
-    appendMessage("Brilliant! Let's work on **Maths** together. Share your problem and what you've tried so far—and feel free to use the **🧮 Calc** button to check your arithmetic!", 'bot-message', true);
+    appendMessage("Brilliant! Let's work on **Maths** together. Share your problem and what you've tried so far—and use the **🧮 Calc** button at the top whenever you need a calculator!", 'bot-message', true);
   } else {
     calcToggleBtn.classList.add('hidden');
     appendMessage(`Brilliant! Let's tackle **${subject}**. Share the question or concept you're working on, and we'll break down the method step-by-step.`, 'bot-message', true);
@@ -78,13 +75,10 @@ async function fetchAIResponse(userText) {
 
   conversationHistory.push({ role: "user", content: userText });
 
-  // Strict Socratic / Guided-Learning System Prompt
   const systemPrompt = `You are Learner AI for the World Ready programme, specialising in ${selectedSubject || 'General Studies'}.
-
 CORE RULE — NEVER GIVE THE FINAL ANSWER:
 - Do NOT solve the problem for the student or state the final answer, even if they beg or ask directly.
 - Instead, teach the learning method: break the problem into small steps, explain the underlying rule or strategy, and ask ONE guiding question at a time so the student discovers the answer themselves.
-- If the student gives an attempt, praise what they got right, gently point out where their method went off track, and guide them to fix that specific step.
 - Always use British English spelling (e.g., Maths, colour, programme, analyse, factorise).
 - Keep responses concise, encouraging, and easy to follow.`;
 
@@ -93,17 +87,13 @@ CORE RULE — NEVER GIVE THE FINAL ANSWER:
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...conversationHistory
-        ],
+        messages: [{ role: "system", content: systemPrompt }, ...conversationHistory],
         model: "openai"
       })
     });
 
     const aiReply = await response.text();
     typingDiv.remove();
-
     conversationHistory.push({ role: "assistant", content: aiReply });
     appendMessage(aiReply, 'bot-message', true);
   } catch (err) {
@@ -123,11 +113,9 @@ function handleSend(customText = null) {
     appendMessage("Please choose a subject from the options above first so I can guide you properly!", 'bot-message');
     return;
   }
-
   fetchAIResponse(text);
 }
 
-// Hint button sends a nudge without revealing the answer
 hintBtn.addEventListener('click', () => {
   if (!selectedSubject || conversationHistory.length === 0) {
     appendMessage("Share a question first, and click **💡 Hint** whenever you get stuck on a step!", 'bot-message', true);
@@ -136,19 +124,12 @@ hintBtn.addEventListener('click', () => {
   handleSend("I'm stuck on this step. Can you give me a small hint on what method to use next without telling me the answer?");
 });
 
-// Calculator Logic
-calcToggleBtn.addEventListener('click', () => {
-  calcModal.style.display = 'flex';
-});
-
-closeCalcBtn.addEventListener('click', () => {
-  calcModal.style.display = 'none';
-});
+calcToggleBtn.addEventListener('click', () => calcModal.style.display = 'flex');
+closeCalcBtn.addEventListener('click', () => calcModal.style.display = 'none');
 
 document.querySelectorAll('.calc-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const val = btn.dataset.val;
-
     if (val === 'C') {
       calcExpression = "";
       calcDisplay.value = "0";
