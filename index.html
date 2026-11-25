@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Learner AI</title>
+  <title>Learner AI | World Ready</title>
   <style>
     * {
       box-sizing: border-box;
@@ -13,29 +13,36 @@
     }
 
     body {
-      background-color: #f0f2f5;
+      background: linear-gradient(135deg, #e0e7ff 0%, #f0f2f5 100%);
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      padding: 16px;
     }
 
     .chat-container {
       width: 100%;
-      max-width: 420px;
-      height: 600px;
+      max-width: 450px;
+      height: 640px;
       background-color: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      border-radius: 20px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
 
     .chat-header {
-      background-color: #2563eb;
+      background: linear-gradient(90deg, #1e40af, #2563eb);
       color: #ffffff;
       padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-left {
       display: flex;
       align-items: center;
       gap: 12px;
@@ -46,11 +53,35 @@
       height: 10px;
       background-color: #4ade80;
       border-radius: 50%;
+      box-shadow: 0 0 8px #4ade80;
     }
 
     .chat-header h2 {
       font-size: 16px;
       font-weight: 600;
+    }
+
+    .chat-header span {
+      font-size: 11px;
+      background-color: rgba(255, 255, 255, 0.2);
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    .reset-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: #ffffff;
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .reset-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
     }
 
     .chat-messages {
@@ -64,12 +95,18 @@
     }
 
     .message {
-      max-width: 75%;
-      padding: 10px 14px;
+      max-width: 80%;
+      padding: 12px 16px;
       border-radius: 16px;
       font-size: 14px;
-      line-height: 1.4;
+      line-height: 1.5;
       word-wrap: break-word;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .bot-message {
@@ -86,9 +123,72 @@
       border-bottom-right-radius: 4px;
     }
 
+    /* Subject Chips Container */
+    .subject-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+      align-self: flex-start;
+      max-width: 90%;
+    }
+
+    .subject-btn {
+      background-color: #ffffff;
+      color: #1d4ed8;
+      border: 1.5px solid #93c5fd;
+      border-radius: 20px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .subject-btn:hover {
+      background-color: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+      transform: translateY(-1px);
+    }
+
+    .subject-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Typing Indicator */
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+      background-color: #e2e8f0;
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      align-self: flex-start;
+      width: fit-content;
+    }
+
+    .typing-indicator span {
+      width: 6px;
+      height: 6px;
+      background-color: #64748b;
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+
     .chat-input-area {
       display: flex;
-      padding: 12px 16px;
+      padding: 14px 16px;
       background-color: #ffffff;
       border-top: 1px solid #e2e8f0;
       gap: 8px;
@@ -96,9 +196,9 @@
 
     .chat-input-area input {
       flex: 1;
-      padding: 10px 14px;
+      padding: 10px 16px;
       border: 1px solid #cbd5e1;
-      border-radius: 20px;
+      border-radius: 24px;
       font-size: 14px;
       outline: none;
       transition: border-color 0.2s;
@@ -112,8 +212,8 @@
       background-color: #2563eb;
       color: #ffffff;
       border: none;
-      border-radius: 20px;
-      padding: 10px 18px;
+      border-radius: 24px;
+      padding: 10px 20px;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
@@ -130,18 +230,20 @@
   <div class="chat-container">
     <!-- Header -->
     <div class="chat-header">
-      <div class="status-dot"></div>
-      <h2>Learner AI</h2>
+      <div class="header-left">
+        <div class="status-dot"></div>
+        <h2>Learner AI</h2>
+        <span>World Ready</span>
+      </div>
+      <button class="reset-btn" id="resetBtn" title="Change Subject">Change Subject</button>
     </div>
 
     <!-- Message History -->
-    <div class="chat-messages" id="chatMessages">
-      <div class="message bot-message">Hello! I'm Learner AI. How can I help you today?</div>
-    </div>
+    <div class="chat-messages" id="chatMessages"></div>
 
     <!-- Input Box -->
     <div class="chat-input-area">
-      <input type="text" id="userInput" placeholder="Type a message..." autocomplete="off">
+      <input type="text" id="userInput" placeholder="Select a subject or type a question..." autocomplete="off">
       <button id="sendBtn">Send</button>
     </div>
   </div>
@@ -150,6 +252,21 @@
     const chatMessages = document.getElementById('chatMessages');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let selectedSubject = null;
+
+    // British Curriculum / World Ready Subjects
+    const subjects = [
+      "Maths",
+      "English",
+      "Biology",
+      "Chemistry",
+      "Physics",
+      "Geography",
+      "History",
+      "Computer Science"
+    ];
 
     function appendMessage(text, className) {
       const msgDiv = document.createElement('div');
@@ -159,24 +276,79 @@
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
+    function showSubjectPrompt() {
+      appendMessage("Hello! I'm Learner AI. Which Subject Do You Need Assistance With?", 'bot-message');
+
+      const optionsDiv = document.createElement('div');
+      optionsDiv.classList.add('subject-options');
+
+      subjects.forEach(subject => {
+        const btn = document.createElement('button');
+        btn.classList.add('subject-btn');
+        btn.textContent = subject;
+        btn.onclick = () => selectSubject(subject, optionsDiv);
+        optionsDiv.appendChild(btn);
+      });
+
+      chatMessages.appendChild(optionsDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function selectSubject(subject, optionsDiv) {
+      selectedSubject = subject;
+
+      // Disable all buttons in this prompt group so they can't be double-clicked
+      const buttons = optionsDiv.querySelectorAll('button');
+      buttons.forEach(b => b.disabled = true);
+
+      // Show user's choice as a chat bubble
+      appendMessage(subject, 'user-message');
+      userInput.placeholder = `Ask a ${subject} question...`;
+
+      showTypingAndReply(`Brilliant! Let's work on ${subject}. What topic or question would you like help with today?`);
+    }
+
+    function showTypingAndReply(replyText) {
+      const typingDiv = document.createElement('div');
+      typingDiv.classList.add('typing-indicator');
+      typingDiv.innerHTML = '<span></span><span></span><span></span>';
+      chatMessages.appendChild(typingDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      setTimeout(() => {
+        typingDiv.remove();
+        appendMessage(replyText, 'bot-message');
+      }, 700);
+    }
+
     function handleSend() {
       const text = userInput.value.trim();
       if (!text) return;
 
-      // Add user message
       appendMessage(text, 'user-message');
       userInput.value = '';
 
-      // Simulate bot response
-      setTimeout(() => {
-        appendMessage("Thanks for your message! This is a placeholder reply.", 'bot-message');
-      }, 600);
+      if (!selectedSubject) {
+        showTypingAndReply("Please choose a subject from the options above first, or click 'Change Subject' at the top!");
+      } else {
+        showTypingAndReply(`[${selectedSubject} Tutor]: That's a great question about "${text}". Once connected to the AI backend, I will break this down step-by-step for you!`);
+      }
     }
+
+    // Reset / Switch Subject
+    resetBtn.addEventListener('click', () => {
+      selectedSubject = null;
+      userInput.placeholder = "Select a subject or type a question...";
+      showSubjectPrompt();
+    });
 
     sendBtn.addEventListener('click', handleSend);
     userInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') handleSend();
     });
+
+    // Initialise chat on load
+    showSubjectPrompt();
   </script>
 
 </body>
